@@ -20,7 +20,7 @@ This guide will assist you in setting up a v2.0.1 KTV Masternode on a Linux Serv
 
 ## Requirements
 - MN Collateral amount of KTV.
-- A VPS running Linux Ubuntu 18.04 with 1 CPU & 1GB Memory minimum (2gb Recommended) from [VPSAG](https://bit.ly/MN_VPSAG) or any other providers.
+- A VPS running Linux Ubuntu 18.04 with 1 CPU & 1GB Memory minimum (2gb Recommended) from [VPSAG](https://bit.ly/MN_VPSAG) or [VULTR](https://bit.ly/MN_VULTR).
 - KTV Wallet (Local Wallet)
 - An SSH Client (<a href="https://www.putty.org/" target="_blank">Putty</a> or <a href="https://dl.bitvise.com/BvSshClient-Inst.exe" target="_blank">Bitvise</a>)
 
