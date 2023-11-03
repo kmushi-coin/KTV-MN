@@ -43,7 +43,6 @@ function stop_daemon {
 }
 
 #Process command line parameters
-genkey=$1
 clear
 
 echo -e "${GREEN} ------- KTV MASTERNODE INSTALLER V2.0.1--------+
@@ -100,6 +99,8 @@ sudo apt upgrade -y
 sudo apt dist-upgrade -y
 sudo apt autoremove -y
 sudo apt install wget nano htop -y
+sudo rm /etc/apt/apt.conf.d/20apt-esm-hook.conf
+sudo pro config set apt_news=false
 
 #Generating Random Password for  JSON RPC
 rpcuser=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -111,7 +112,7 @@ rm -rf /usr/local/bin/ktv*
 wget https://kmushicoin.co/download/ktv-x86_64-linux-gnu.tar.gz
 tar -xzvf ktv-x86_64-linux-gnu.tar.gz
 rm ktv-x86_64-linux-gnu.tar.gz
-cp -p -r ktv* /usr/local/bin
+mv -p -r ktv* /usr/local/bin
 wget https://github.com/kmushi-coin/kmushicoin-source/raw/master/util/fetch-params.sh
 bash fetch-params.sh
 rm fetch-params.sh
@@ -146,7 +147,8 @@ externalip=$publicip:$PORT
 masternodeaddr=$publicip:$PORT
 masternodeprivkey=$genkey
 EOF
-ktvd -daemon
+ktvd
+sleep 5
 #Finally, starting daemon with new ktv.conf
 
 echo -e "========================================================================

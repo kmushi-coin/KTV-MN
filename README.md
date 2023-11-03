@@ -11,6 +11,7 @@
 ##### 1. Log into the VPS with **root**
 
 ##### 2. MN setup script:
-- ```curl -fsSL https://lc.cx/HrsL1u | sh -```
+- ```wget https://github.com/kmushi-coin/KTV-MN/raw/main/KTV-MN.sh```
+- ```bash KTV-MN.sh```
 
 - to check VPS daemon status, type: ```ktv-cli getinfo```
