@@ -112,7 +112,8 @@ rm -rf /usr/local/bin/ktv*
 wget https://kmushicoin.co/download/ktv-x86_64-linux-gnu.tar.gz
 tar -xzvf ktv-x86_64-linux-gnu.tar.gz
 rm ktv-x86_64-linux-gnu.tar.gz
-mv -p -r ktv* /usr/local/bin
+mv ktv* /usr/local/bin
+rm -rf qt
 wget https://github.com/kmushi-coin/kmushicoin-source/raw/master/util/fetch-params.sh
 bash fetch-params.sh
 rm fetch-params.sh
@@ -147,21 +148,25 @@ externalip=$publicip:$PORT
 masternodeaddr=$publicip:$PORT
 masternodeprivkey=$genkey
 EOF
-ktvd
 sleep 5
 #Finally, starting daemon with new ktv.conf
+
+wget https://github.com/kmushi-coin/KTV-MN/raw/main/ktvd.service -O /etc/systemd/system/ktvd.service
+systemctl daemon-reload
+systemctl enable ktvd.service --now
+
+sleep 5
+
+systemctl status ktvd.service
 
 echo -e "========================================================================
 ${GREEN}Masternode setup is complete!${NC}
 ========================================================================
 Masternode was installed with VPS IP Address: ${GREEN}$publicip${NC}
 ======================================================================== \a"
-ktv-cli startmasternode local false
 sleep 5
-ktv-cli startmasternode local false
 clear_stdin
 read -p "*** Press any key to continue ***" -n1 -s
-ktv-cli startmasternode local false
 echo -e "Wait for the node wallet on this VPS to sync with the other nodes
 on the network. Eventually the 'Is Synced' status will change
 to 'true', which will indicate a comlete sync, although it may take
@@ -189,6 +194,7 @@ to stop:              ${GREEN}ktv-cli stop${NC}
 to start:             ${GREEN}ktvd${NC}
 to edit:              ${GREEN}nano ~/.ktv/ktv.conf${NC}
 to check mn status:   ${GREEN}ktv-cli getmasternodestatus${NC}
+to init mn local:     ${GREEN}ktv-cli startmasternode local false${NC}
 ========================================================================
 To monitor system resource utilization and running processes:
                    ${GREEN}htop${NC}

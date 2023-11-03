@@ -1,0 +1,18 @@
+[Unit]
+Description=KTV daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/ktvd -daemon -conf=/root/.ktv/ktv.conf -pid=/run/ktvd/ktvd.pid
+RuntimeDirectory=ktvd
+User=root
+Type=forking
+PIDFile=/run/ktvd/ktvd.pid
+Restart=on-failure
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateDevices=true
+MemoryDenyWriteExecute=true
+[Install]
+WantedBy=multi-user.target
