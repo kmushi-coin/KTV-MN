@@ -1,11 +1,11 @@
 #!/bin/bash
-# KTV Masternode Setup Script V2.0.1 for Ubuntu 18.04 LTS
+# KTV Masternode Setup Script V2.0.1 for Ubuntu 22.04 LTS
 #
 # Script will attempt to autodetect primary public IP address
 # and generate masternode private key unless specified in command line
 #
 # Usage:
-# bash KTV-18.04-MN.sh
+# bash KTV-MN.sh
 #
 
 #Color codes
@@ -21,13 +21,12 @@ RPC=36600
 #Clear keyboard input buffer
 function clear_stdin { while read -r -t 0; do read -r; done; }
 
-#Delay script execution for N seconds
 function delay { echo -e "${GREEN}Sleep for $1 seconds...${NC}"; sleep "$1"; }
 
 #Stop daemon if it's already running
 function stop_daemon {
     if pgrep -x 'ktvd' > /dev/null; then
-        echo -e "${YELLOW}Attempting to stop ktvd${NC}"
+        echo -e "${YELLOW}Intento de detener ktvd${NC}"
         ktv-cli stop
         sleep 30
         if pgrep -x 'ktvd' > /dev/null; then
@@ -51,20 +50,18 @@ echo -e "${GREEN} ------- KTV MASTERNODE INSTALLER V2.0.1--------+
  |                                                  |
  |                                                  |::
  |       The installation will install and run      |::
- |        the masternode under a user ktv.         |::
+ |        the masternode under a user ktv.          |::
  |                                                  |::
  |        This version of installer will setup      |::
- |           fail2ban and ufw for your safety.      |::
+ |                                                  |::
  |                                                  |::
  +------------------------------------------------+::
    ::::::::::::::::::::::::::::::::::::::::::::::::::S${NC}"
-echo "Do you want me to generate a masternode private key for you?[y/n]"
-read DOSETUP
 
-if [[ $DOSETUP =~ "n" ]] ; then
-          read -e -p "Enter your private key:" genkey;
-              read -e -p "Confirm your private key: " genkey2;
-    fi
+stop_daemon
+
+read -e -p "Enter your private key:" genkey;
+read -e -p "Confirm your private key: " genkey2;
 
 #Confirming match
   if [ $genkey = $genkey2 ]; then
@@ -76,113 +73,61 @@ sleep .5
 clear
 
 # Determine primary public IP address
-dpkg -s dnsutils 2>/dev/null >/dev/null || sudo apt-get -y install dnsutils
 publicip=$(dig +short myip.opendns.com @resolver1.opendns.com)
 
 if [ -n "$publicip" ]; then
     echo -e "${YELLOW}IP Address detected:" $publicip ${NC}
 else
-    echo -e "${RED}ERROR: Public IP Address was not detected!${NC} \a"
-    clear_stdin
-    read -e -p "Enter VPS Public IP Address: " publicip
-    if [ -z "$publicip" ]; then
-        echo -e "${RED}ERROR: Public IP Address must be provided. Try again...${NC} \a"
-        exit 1
+    curl -s https://api.my-ip.io/v2/ip.txt > ip.txt
+    publicip=$(head -n 1 ip.txt)
+    rm -rf ip.txt
+    if [ -n "$publicip" ]; then
+        echo -e "${YELLOW}IP Address detected:" $publicip ${NC}
+    else
+        echo -e "${RED}ERROR: Public IP Address was not detected!${NC} \a"
+        clear_stdin
+        read -e -p "Enter VPS Public IP Address: " publicip
+        if [ -z "$publicip" ]; then
+            echo -e "${RED}ERROR: Public IP Address must be provided. Try again...${NC} \a"
+            exit 1
+        fi
     fi
 fi
-if [ -d "/var/lib/fail2ban/" ]; 
-then
-    echo -e "${GREEN}Packages already installed...${NC}"
-else
-    echo -e "${GREEN}Updating system and installing required packages...${NC}"
 
-sudo DEBIAN_FRONTEND=noninteractive apt-get update -y
-sudo apt-get -y upgrade
-sudo apt-get -y dist-upgrade
-sudo apt-get -y autoremove
-sudo apt-get -y install wget nano
-fi
+echo -e "${GREEN}Updating system and installing required packages...${NC}"
+sudo apt update -y
+sudo apt upgrade -y
+sudo apt dist-upgrade -y
+sudo apt autoremove -y
+sudo apt install wget nano htop -y
 
 #Generating Random Password for  JSON RPC
 rpcuser=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 rpcpassword=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
-#Create 2GB swap file
-if grep -q "SwapTotal" /proc/meminfo; then
-    echo -e "${GREEN}Skipping disk swap configuration...${NC} \n"
-else
-    echo -e "${YELLOW}Creating 2GB disk swap file. \nThis may take a few minutes!${NC} \a"
-    touch /var/swap.img
-    chmod 600 swap.img
-    dd if=/dev/zero of=/var/swap.img bs=1024k count=2000
-    mkswap /var/swap.img 2> /dev/null
-    swapon /var/swap.img 2> /dev/null
-    if [ $? -eq 0 ]; then
-        echo '/var/swap.img none swap sw 0 0' >> /etc/fstab
-        echo -e "${GREEN}Swap was created successfully!${NC} \n"
-    else
-        echo -e "${RED}Operation not permitted! Optional swap was not created.${NC} \a"
-        rm /var/swap.img
-    fi
-fi
-
 #Installing Daemon
 cd ~
+mkdir -p ktv
+cd ktv
 rm -rf /usr/local/bin/ktv*
-wget https://github.com/kmushi-coin/kmushicoin-source/releases/download/v2.0.1/ktv-2.0.1-x86_64-linux-gnu.tar.gz
-tar -xzvf ktv-2.0.1-x86_64-linux-gnu.tar.gz
-sudo chmod -R 755 ktv-cli
-sudo chmod -R 755 ktvd
-cp -p -r ktvd /usr/local/bin
-cp -p -r ktv-cli /usr/local/bin
+wget https://kmushicoin.co/download/ktv-x86_64-linux-gnu.tar.gz
+tar -xzvf ktv-x86_64-linux-gnu.tar.gz
+rm ktv-x86_64-linux-gnu.tar.gz
+cp -p -r ktv* /usr/local/bin
+curl -fsSL https://github.com/kmushi-coin/kmushicoin-source/raw/master/util/fetch-params.sh | sh -
+sleep 5
 
+#Create datadir
+if [ ! -f ~/.ktv/ktv.conf ]; then
+    sudo mkdir ~/.ktv
+fi
 
-sudo mkdir ~/.ktv-params
-cd ~/.ktv-params && wget https://github.com/kmushi-coin/kmushicoin-source/raw/master/params/sapling-output.params && wget https://github.com/kmushi-coin/kmushicoin-source/raw/master/params/sapling-spend.params
-
- ktv-cli stop
- sleep 5
- #Create datadir
- if [ ! -f ~/.ktv/ktv.conf ]; then
- 	sudo mkdir ~/.ktv
-
- fi
+wget https://kmushicoin.co/download/bootstrap.dat -O ~/.ktv/
 
 cd ~
 clear
+
 echo -e "${YELLOW}Creating ktv.conf...${NC}"
-
-# If genkey was not supplied in command line, we will generate private key on the fly
-if [ -z $genkey ]; then
-    cat <<EOF > ~/.ktv/ktv.conf
-rpcuser=$rpcuser
-rpcpassword=$rpcpassword
-server=1
-daemon=1
-
-EOF
-
-    sudo chmod 755 -R ~/.ktv/ktv.conf
-
-    #Starting daemon first time just to generate masternode private key
-    ktvd
-sleep 7
-while true;do
-    echo -e "${YELLOW}Generating masternode private key...${NC}"
-    genkey=$(ktv-cli createmasternodekey)
-    if [ "$genkey" ]; then
-        break
-    fi
-sleep 7
-done
-    fi
-
-    #Stopping daemon to create ktv.conf
-    ktv-cli stop
-    sleep 5
-cd ~/.ktv && rm -rf blocks chainstate sporks zerocoin evodb
-
-
 # Create ktv.conf
 cat <<EOF > ~/.ktv/ktv.conf
 rpcuser=$rpcuser
@@ -200,7 +145,6 @@ masternode=1
 externalip=$publicip:$PORT
 masternodeaddr=$publicip:$PORT
 masternodeprivkey=$genkey
-
 EOF
 ktvd -daemon
 #Finally, starting daemon with new ktv.conf
@@ -209,32 +153,20 @@ echo -e "=======================================================================
 ${GREEN}Masternode setup is complete!${NC}
 ========================================================================
 Masternode was installed with VPS IP Address: ${GREEN}$publicip${NC}
-Masternode Private Key: ${GREEN}$genkey${NC}
-Now you can add the following string to the masternode.conf file 
 ======================================================================== \a"
-echo -e "${GREEN}ktv_mn1 $publicip:$PORT $genkey TxId TxIdx${NC}"
-echo -e "========================================================================
-Use your mouse to copy the whole string above into the clipboard by
-tripple-click + single-click (Dont use Ctrl-C) and then paste it 
-into your ${GREEN}masternode.conf${NC} file and replace:
-    ${GREEN}ktv_mn1${NC} - with your desired masternode name (alias)
-    ${GREEN}TxId${NC} - with Transaction Id from getmasternodeoutputs
-    ${GREEN}TxIdx${NC} - with Transaction Index (0 or 1)
-     Remember to save the masternode.conf and restart the wallet!
-To introduce your new masternode to the KTV network, you need to
-issue a masternode start command from your wallet, which proves that
-the collateral for this node is secured."
-
+ktc-cli startmasternode local false
+sleep 5
+ktc-cli startmasternode local false
 clear_stdin
 read -p "*** Press any key to continue ***" -n1 -s
-
+ktc-cli startmasternode local false
 echo -e "Wait for the node wallet on this VPS to sync with the other nodes
 on the network. Eventually the 'Is Synced' status will change
 to 'true', which will indicate a comlete sync, although it may take
 from several minutes to several hours depending on the network state.
 Your initial Masternode Status may read:
     ${GREEN}Node just started, not yet activated${NC} or
-    ${GREEN}Node  is not in masternode list${NC}, which is normal and expected.
+    ${GREEN}Node is not in masternode list${NC}, which is normal and expected.
 "
 clear_stdin
 read -p "*** Press any key to continue ***" -n1 -s
@@ -247,8 +179,6 @@ To view masternode configuration produced by this script in ktv.conf:
 ${GREEN}cat ~/.ktv/ktv.conf${NC}
 Here is your ktv.conf generated by this script:
 -------------------------------------------------${GREEN}"
-echo -e "${GREEN}ktv_mn1 $publicip:$PORT $genkey TxId TxIdx${NC}"
-cat ~/.ktv/ktv.conf
 echo -e "${NC}-------------------------------------------------
 NOTE: To edit ktv.conf, first stop the ktvd daemon,
 then edit the ktv.conf file and save it in nano: (Ctrl-X + Y + Enter),
