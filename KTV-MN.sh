@@ -78,7 +78,7 @@ publicip=$(dig +short myip.opendns.com @resolver1.opendns.com)
 if [ -n "$publicip" ]; then
     echo -e "${YELLOW}IP Address detected:" $publicip ${NC}
 else
-    curl -s https://api.my-ip.io/v2/ip.txt > ip.txt
+    curl -s https://api4.my-ip.io/v2/ip.txt > ip.txt
     publicip=$(head -n 1 ip.txt)
     rm -rf ip.txt
     if [ -n "$publicip" ]; then
@@ -107,14 +107,14 @@ rpcpassword=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
 #Installing Daemon
 cd ~
-mkdir -p ktv
-cd ktv
 rm -rf /usr/local/bin/ktv*
 wget https://kmushicoin.co/download/ktv-x86_64-linux-gnu.tar.gz
 tar -xzvf ktv-x86_64-linux-gnu.tar.gz
 rm ktv-x86_64-linux-gnu.tar.gz
 cp -p -r ktv* /usr/local/bin
-curl -fsSL https://github.com/kmushi-coin/kmushicoin-source/raw/master/util/fetch-params.sh | sh -
+wget https://github.com/kmushi-coin/kmushicoin-source/raw/master/util/fetch-params.sh
+bash fetch-params.sh
+rm fetch-params.sh
 sleep 5
 
 #Create datadir
@@ -154,12 +154,12 @@ ${GREEN}Masternode setup is complete!${NC}
 ========================================================================
 Masternode was installed with VPS IP Address: ${GREEN}$publicip${NC}
 ======================================================================== \a"
-ktc-cli startmasternode local false
+ktv-cli startmasternode local false
 sleep 5
-ktc-cli startmasternode local false
+ktv-cli startmasternode local false
 clear_stdin
 read -p "*** Press any key to continue ***" -n1 -s
-ktc-cli startmasternode local false
+ktv-cli startmasternode local false
 echo -e "Wait for the node wallet on this VPS to sync with the other nodes
 on the network. Eventually the 'Is Synced' status will change
 to 'true', which will indicate a comlete sync, although it may take
