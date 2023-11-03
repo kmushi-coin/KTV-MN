@@ -64,7 +64,7 @@ read -e -p "Enter your private key:" genkey;
 read -e -p "Confirm your private key: " genkey2;
 
 #Confirming match
-  if [ $genkey = $genkey2 ]; then
+if [ $genkey = $genkey2 ]; then
      echo -e "${GREEN}MATCH! ${NC} \a"
 else
      echo -e "${RED} Error: Private keys do not match. Try again or let me generate one for you...${NC} \a";exit 1
@@ -122,7 +122,7 @@ if [ ! -f ~/.ktv/ktv.conf ]; then
     sudo mkdir ~/.ktv
 fi
 
-wget https://kmushicoin.co/download/bootstrap.dat -O ~/.ktv/
+wget https://kmushicoin.co/download/bootstrap.dat -O ~/.ktv/bootstrap.dat
 
 cd ~
 clear
